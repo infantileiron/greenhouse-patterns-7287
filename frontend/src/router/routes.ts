@@ -1,0 +1,1 @@
+export const routes=[{path:'overview',label:'研究总览',number:'01'},{path:'datasets',label:'调查样本',number:'02'},{path:'studies',label:'挖掘配置',number:'03'},{path:'results',label:'关联证据',number:'04'},{path:'reviews',label:'复查与归档',number:'05'}];

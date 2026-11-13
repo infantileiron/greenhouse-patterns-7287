@@ -1,0 +1,1 @@
+export function State({loading,error,empty,onRetry}:{loading?:boolean;error?:string;empty?:boolean;onRetry?:()=>void}){if(error)return <div className='notice error' role='alert'>{error} {onRetry&&<button onClick={onRetry}>重试</button>}</div>;if(loading)return <p className='notice'>正在读取研究档案…</p>;if(empty)return <div className='notice'>尚无记录。先导入调查CSV，再建立挖掘研究。</div>;return null;}

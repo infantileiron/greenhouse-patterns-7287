@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS datasets(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS studies(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL, dataset_id TEXT NOT NULL REFERENCES datasets(id));
+CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL, study_id TEXT NOT NULL REFERENCES studies(id));
+CREATE TABLE IF NOT EXISTS reviews(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL, run_id TEXT NOT NULL REFERENCES runs(id));
+CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL, review_id TEXT NOT NULL REFERENCES reviews(id));
+CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS studies_dataset ON studies(dataset_id);
+CREATE INDEX IF NOT EXISTS runs_study ON runs(study_id);
+CREATE INDEX IF NOT EXISTS reviews_run ON reviews(run_id);
+CREATE UNIQUE INDEX IF NOT EXISTS reports_review ON reports(review_id);

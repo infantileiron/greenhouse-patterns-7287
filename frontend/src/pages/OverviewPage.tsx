@@ -1,0 +1,8 @@
+import type {Workspace} from '../types/domain';
+import {Specimen} from '../components/common/Specimen';
+import {Status} from '../components/common/Status';
+import {State} from '../components/common/State';
+export function OverviewPage(w:Workspace){
+ const total=w.datasets.data.reduce((n,d)=>n+d.sample_count,0);
+ return <><header className="page-heading"><div><span className="eyebrow">FIELD NOTES / 研究总览</span><h1>共现有迹，<br/><em>病因待证。</em></h1><p>从调查样本出发，用支持度、提升度和多重检验，<br/>挑出值得农艺师亲自复查的病征组合。</p></div><Specimen/></header><div className="summary-strip"><div><span>归档植株</span><b>{total.toLocaleString()}</b><small>逐株记录 · 保留无病征样本</small></div><div><span>挖掘研究</span><b>{w.studies.data.length.toString().padStart(2,'0')}</b><small>固定种子 · 可重复计算</small></div><div><span>待批复查</span><b>{w.reviews.data.filter(r=>r.status==='pending').length.toString().padStart(2,'0')}</b><small>先验证关联，再设计干预</small></div></div><section className="split"><div><h2>最近的研究运行 <small>RUN LOG</small></h2><State {...w.runs} empty={!w.runs.data.length} onRetry={w.runs.refresh}/>{w.runs.data.slice(0,5).map(r=><button className="run-line" key={r.id} onClick={()=>{w.selectRun(r.id);w.navigate('results')}}><span><b>{w.studies.data.find(s=>s.id===r.study_id)?.name||'研究运行'}</b><small>{r.id.slice(0,18)}</small></span><Status value={r.status}/><span>↗</span></button>)}</div><aside className="method-note"><span className="eyebrow">分析边界 / RESEARCH NOTE</span><h3>高频，不等于<br/>高关联。</h3><p>提升度参照后件自然发生率；温室内置换保留场地差异；BH 在完整候选规则族上调整。</p><p>结果服务于探索性复查，不作为病因判断。</p><button onClick={()=>w.navigate('studies')}>建立新的研究 →</button></aside></section></>
+}
