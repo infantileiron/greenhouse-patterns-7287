@@ -53,6 +53,8 @@ docker compose exec -T backend python -m scripts.seed_demo
 
 失败态：20–5000株，症状2–12种、名称最长30字，重复植株拒绝；CSV最大1.5MB；支持度0.02–0.8、置信度0.1–1、置换99–1999；活跃运行最多3个。无规则时返回真实空结果。Redis不可达返回503并保存失败状态，可恢复后新建运行。所有统计与持久化在后端完成，前端图形按真实结果渲染。
 
+运行恢复：worker 以数据库条件更新原子认领任务并持租约心跳。执行者中断后租约过期，运行自动转为恢复重试（recovering）并重新投递，恢复后接着处理；queued/running/recovering 都占活跃名额。多名执行者同时接手或同一任务重复送达时，认领只成功一次；完成写回校验认领令牌，接管完成后原执行者的晚到结果会被丢弃，不能改写本次筛查证据。连续中断达到 `RUN_MAX_ATTEMPTS` 后标记失败并保留原因；复查只接受成功结果。
+
 ## 技术与结构
 
 | 部分 | 实现 |
@@ -67,7 +69,7 @@ docker compose exec -T backend python -m scripts.seed_demo
 
 共享组件：Status、State、RuleTable、Specimen；RuleTable 同时服务运行结果与复查证据。共用 hooks 为 useResource/useRoute。UI 为陶土植物标本册，Noto Serif SC + IBM Plex Mono、oklch 色板、分层排版、1280/768/手机断点与减少动效支持。Google Fonts 需要外网；离线回退 serif/monospace。
 
-共享枚举定义位于 `backend/src/constants/enums.py` 与 `frontend/src/constants/enums.ts`：Role (`admin/analyst/viewer`)、RunStatus (`queued/running/succeeded/failed`)、ReviewStatus (`pending/approved/rejected`)。权限引用 `utils/security.py`，状态引用 `services/run.py`；前端 `App.tsx`、`components/common/Status.tsx` 引用。ReviewDecision schema 只接受 approved/rejected。
+共享枚举定义位于 `backend/src/constants/enums.py` 与 `frontend/src/constants/enums.ts`：Role (`admin/analyst/viewer`)、RunStatus (`queued/running/recovering/succeeded/failed`)、ReviewStatus (`pending/approved/rejected`)。权限引用 `utils/security.py`，状态引用 `services/run.py`；前端 `App.tsx`、`components/common/Status.tsx` 引用。ReviewDecision schema 只接受 approved/rejected。
 
 Nginx `/api/` 剥除前缀代理至 backend，后端路由不含 `/api`。前端提供 SPA 回落，Redis不映射宿主端口。backend/worker依赖db/redis healthy，frontend依赖backend healthy，五服务都有真实healthcheck。
 
@@ -84,6 +86,8 @@ Nginx `/api/` 剥除前缀代理至 backend，后端路由不含 `/api`。前端
 | REDIS_URL / QUEUE_MODE | Compose为redis://redis:6379/0 / redis |
 | ARTIFACT_DIR | Compose为/artifacts共享卷 |
 | QUEUE_MODE=database | 仅本地测试，SQLite独立worker轮询，不代表Redis验收 |
+| RUN_LEASE_SECONDS / RUN_HEARTBEAT_SECONDS | 运行租约30秒 / 心跳5秒，失联租约过期后自动恢复 |
+| RUN_MAX_ATTEMPTS / RUN_REQUEUE_GRACE_SECONDS | 最多自动恢复5次 / 队列补投宽限15秒 |
 
 ## 本地开发与测试
 
@@ -102,6 +106,6 @@ python -m src.worker
 
 ## 已知差异
 
-当前 React18 离线包不可用，本地构建临时借用可用 React19.3.1依赖完成类型与打包检查，交付package.json仍严格声明React18；React18安装/构建需在依赖可用环境复验。未测试容器实际healthy、PostgreSQL、Redis、浏览器交互/截图；没有伪造截图。worker不自动重放崩溃时的running任务，当前需保留失败记录后重新创建运行。审计异常不会阻塞业务，需要运营日志监控。数据库迁移当前为首版幂等DDL。
+当前 React18 离线包不可用，本地构建临时借用可用 React19.3.1依赖完成类型与打包检查，交付package.json仍严格声明React18；React18安装/构建需在依赖可用环境复验。未测试容器实际healthy、PostgreSQL、Redis、浏览器交互/截图；没有伪造截图。中断恢复、重复领取与晚到结果栅栏由 `backend/tests/test_run_recovery.py` 覆盖（SQLite + database队列），在backend目录执行 `python -m pytest tests/`。审计异常不会阻塞业务，需要运营日志监控。数据库迁移当前为首版幂等DDL，runs 的认领列由 `initialize()` 幂等补齐。
 
 源码和测试产物分离；.env、node_modules、dist、数据库、日志、上传产物均忽略。MIT License。

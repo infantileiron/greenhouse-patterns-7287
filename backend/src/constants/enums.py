@@ -6,6 +6,7 @@ class Role(str, Enum):
 class RunStatus(str, Enum):
     QUEUED = 'queued'
     RUNNING = 'running'
+    RECOVERING = 'recovering'
     SUCCEEDED = 'succeeded'
     FAILED = 'failed'
 class ReviewStatus(str, Enum):

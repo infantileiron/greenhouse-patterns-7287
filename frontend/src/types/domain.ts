@@ -3,7 +3,7 @@ export interface Dataset {id:string;name:string;filename:string;sample_count:num
 export interface Study {id:string;name:string;dataset_id:string;min_support:number;min_confidence:number;permutations:number;seed:number}
 export interface Rule {rule_id:string;antecedent:string[];consequent:string;count:number;support:number;confidence:number;lift:number;p_value:number;q_value:number}
 export interface Result {sample_count:number;item_count:number;family_size:number;frequent_itemsets:number;rules:Rule[];significant_count:number;frequencies:{item:string;count:number;rate:number}[];greenhouses:{name:string;count:number}[];checksum:string;method:string;caveat:string;params:Record<string,number>}
-export interface Run {id:string;study_id:string;status:string;result?:Result;error?:string;created_at:string}
+export interface Run {id:string;study_id:string;status:string;result?:Result;error?:string;attempts?:number;started_at?:string;finished_at?:string;created_at:string}
 export interface Review {id:string;run_id:string;rule_ids:string[];note:string;status:string;submitted_by:string;reviewed_by?:string}
 export interface Report {id:string;name:string;review_id:string;created_at:string}
 export interface Sample {plant_id:string;greenhouse:string;symptoms:string[]}
